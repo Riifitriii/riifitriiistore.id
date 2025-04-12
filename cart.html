@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Keranjang Belanja - RiiFitriii Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <style>
+    .toastify-custom {
+      font-family: 'Arial', sans-serif;
+      font-weight: 500;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100">
+  <!-- Header Section -->
+  <header class="bg-white shadow sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="logo.png" alt="Logo RiiFitriii Store" class="h-10 object-contain">
+        <h1 class="text-2xl font-bold text-purple-700">RiiFitriii Store</h1>
+      </div>
+      <div id="authButton"></div>
+    </div>
+  </header>
+
+  <!-- Main Cart Content -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <h2 class="text-2xl font-bold mb-4 text-purple-800">Keranjang Belanja Kamu</h2>
+
+    <div id="cartContainer" class="bg-white shadow rounded-xl p-4 overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-700">
+        <thead>
+          <tr class="border-b">
+            <th class="text-left p-2">Produk</th>
+            <th class="text-left p-2">Kategori</th>
+            <th class="text-left p-2">Bahan</th>
+            <th class="text-left p-2">Harga</th>
+            <th class="text-left p-2">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="cartItems">
+          <!-- Cart items will be dynamically inserted here -->
+        </tbody>
+      </table>
+
+      <div class="mt-4 text-right">
+        <p class="text-lg font-bold">Total: <span id="totalPrice">Rp0</span></p>
+        <button id="checkoutButton"
+          class="mt-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-200 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+          ${cartItems.length===0 ? 'disabled' : '' }>
+          Checkout
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white py-4 text-center text-sm text-gray-500 mt-10">
+    &copy; 2025 Riifitriii Store. All rights reserved.
+  </footer>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCsmfNaVjpfNsufsmMDGllKeQOeTmO8cLU",
+      authDomain: "riifitriiistore.firebaseapp.com",
+      projectId: "riifitriiistore",
+      storageBucket: "riifitriiistore.firebasestorage.app",
+      messagingSenderId: "886150638080",
+      appId: "1:886150638080:web:e6ede1aecefaf6f4c646e5",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <!-- Script Section -->
+  <script>
+    const loggedInUser = localStorage.getItem("loggedInUser");
+
+    // Handle auth button
+    const authButton = document.getElementById("authButton");
+    if (loggedInUser) {
+      authButton.innerHTML = `<button onclick="logout()" class="text-purple-700 hover:underline px-4 py-2 rounded-lg transition">Logout</button>`;
+    } else {
+      authButton.innerHTML = `<a href="login.html" class="text-purple-700 hover:underline px-4 py-2 rounded-lg transition">Login</a>`;
+    }
+
+    // Logout Function
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "dashboard-pelanggan.html";
+    }
+
+    // Cart Management Functions
+    function loadCart() {
+      const cartItems = JSON.parse(localStorage.getItem("cart")) || [];
+      const cartContainer = document.getElementById("cartItems");
+      const totalPriceEl = document.getElementById("totalPrice");
+      cartContainer.innerHTML = "";
+
+      let total = 0;
+
+      if (cartItems.length === 0) {
+        cartContainer.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center text-gray-500 py-4">Keranjang belanja kosong.</td>
+          </tr>
+        `;
+        totalPriceEl.textContent = "Rp0";
+        return;
+      }
+
+      cartItems.forEach((item, index) => {
+        total += item.price;
+        const row = document.createElement("tr");
+        row.className = "border-b";
+        row.innerHTML = `
+          <td class="p-2">${item.name}</td>
+          <td class="p-2">${item.category}</td>
+          <td class="p-2">${item.material}</td>
+          <td class="p-2">Rp${item.price.toLocaleString()}</td>
+          <td class="p-2">
+            <button onclick="removeItem(${index})" class="bg-red-400 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+              Hapus
+            </button>
+          </td>
+        `;
+        cartContainer.appendChild(row);
+      });
+
+      totalPriceEl.textContent = "Rp" + total.toLocaleString();
+    }
+
+    function removeItem(index) {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      cart.splice(index, 1);
+      localStorage.setItem("cart", JSON.stringify(cart));
+      loadCart();
+    }
+
+    // Inisialisasi cart saat halaman dimuat
+    loadCart();
+
+    // Handle checkout button click
+    document.getElementById('checkoutButton').addEventListener('click', function () {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const loggedInUser = localStorage.getItem("loggedInUser");
+
+      if (cart.length === 0) {
+        Toastify({
+          text: "Keranjang masih kosong!",
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ff4d4d",
+        }).showToast();
+        return;
+      }
+
+      // Belum login
+      if (!loggedInUser || loggedInUser === "null" || loggedInUser.trim() === "") {
+        Toastify({
+          text: "Anda harus login untuk checkout.",
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ffcc00",
+        }).showToast();
+        localStorage.setItem("tempCart", JSON.stringify(cart)); // Simpan sementara
+        window.location.href = "login.html?redirect=checkout";
+        return;
+      }
+
+      // Sudah login, cek role-nya
+      try {
+        const user = JSON.parse(loggedInUser);
+        if (user.role !== "pelanggan") {
+          Toastify({
+            text: "Hanya pelanggan yang bisa melakukan checkout!",
+            duration: 3000,
+            close: true,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#ffcc00",
+          }).showToast();
+          return;
+        }
+
+        // Role pelanggan, proses transaksi
+        const transaksiData = {
+          userId: user.id || user.email || "unknown",
+          nama: user.nama || user.name || "Tanpa Nama",
+          waktu: new Date().toISOString(),
+          items: cart,
+          total: cart.reduce((acc, item) => acc + item.price, 0)
+        };
+
+        db.collection("transaksi")
+          .add(transaksiData)
+          .then((docRef) => {
+            console.log("Transaksi disimpan:", docRef.id);
+            localStorage.setItem("checkoutData", JSON.stringify(transaksiData));
+            localStorage.removeItem("cart");
+            window.location.href = "struk.html";
+          })
+          .catch((error) => {
+            console.error("Gagal simpan transaksi:", error);
+            Toastify({
+              text: "Gagal menyimpan transaksi. Coba lagi.",
+              duration: 3000,
+              close: true,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#ff4d4d",
+            }).showToast();
+          });
+
+      } catch (error) {
+        console.error("Gagal membaca data user:", error);
+        Toastify({
+          text: "Terjadi kesalahan saat memverifikasi akun.",
+          duration: 3000,
+          close: true,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ff4d4d",
+        }).showToast();
+      }
+    });
+
+    // Update checkout button state
+    function updateCheckoutButton() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      document.getElementById('checkoutButton').disabled = cart.length === 0;
+    }
+
+    // Initialize button state
+    updateCheckoutButton();
+  </script>
+</body>
+
+</html>

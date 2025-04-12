@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Struk Pembelian - RiiFitriii Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Tampilan Normal */
+    .struk-container {
+      width: 100%;
+      max-width: 320px;
+      margin: 20px auto;
+      font-family: "Courier New", monospace;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .struk-header {
+      text-align: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px dashed #e2e8f0;
+    }
+
+    .struk-title {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 5px;
+      color: rgba(183, 1, 228, 0.945);
+      letter-spacing: 1px;
+    }
+
+    .struk-subtitle {
+      font-size: 12px;
+      color: #64748b;
+      letter-spacing: 0.5px;
+    }
+
+    .struk-detail {
+      font-size: 12px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    .struk-detail div {
+      margin-bottom: 3px;
+      display: flex;
+      flex-wrap: wrap;
+    }
+
+    .struk-detail div strong {
+      min-width: 80px;
+      display: inline-block;
+    }
+
+    .struk-detail div span {
+      flex: 1;
+      min-width: 0;
+      word-break: break-word;
+    }
+
+    .struk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+
+    .struk-table th {
+      text-align: left;
+      padding: 5px 0;
+      border-bottom: 2px dashed #e2e8f0;
+      color: #4f46e5;
+    }
+
+    .struk-table td {
+      padding: 5px 0;
+      vertical-align: top;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .struk-total {
+      text-align: right;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 15px 0;
+      padding: 10px;
+      border-top: 2px dashed #e2e8f0;
+      background: #f8fafc;
+      border-radius: 0 0 4px 4px;
+    }
+
+    /* Tampilan Cetak */
+    @media print {
+      body {
+        width: auto;
+        font-size: 9px;
+        margin: 0;
+        padding: 2mm;
+        background: black;
+      }
+
+      header,
+      button,
+      .no-print {
+        display: none;
+      }
+
+      .struk-container {
+        width: 100%;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+      }
+
+      .struk-table {
+        font-size: 9px;
+      }
+
+      .struk-table th,
+      .struk-table td {
+        padding: 2px 0;
+      }
+
+      #qrcode {
+        margin: 5px auto;
+        text-align: center;
+      }
+    }
+
+    #qrcode {
+      margin: 10px auto;
+      text-align: center;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+</head>
+
+<body class="bg-gray-100">
+  <!-- Header (non-cetak) -->
+  <header class="bg-white shadow sticky top-0 z-10 no-print">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="logo.png" alt="Logo Riifitriii Store" class="h-10 object-contain" />
+        <h1 class="text-2xl font-bold text-purple-700">Riifitriii Store</h1>
+      </div>
+      <button onclick="logout()" class="text-purple-900 hover:underline px-4 py-2 rounded-lg transition">
+        Logout
+      </button>
+    </div>
+  </header>
+
+  <!-- Struk -->
+  <main class="struk-container">
+    <div class="struk-header">
+      <div class="struk-title">RiiFitriii Store</div>
+      <div class="struk-subtitle">Struk Pembelian</div>
+    </div>
+
+    <div class="struk-detail">
+      <div><strong>ID Transaksi:</strong> <span id="idTransaksi"></span></div>
+      <div><strong>No. Pesanan:</strong> <span id="nomorPesanan"></span></div>
+      <div>
+        <strong>Tanggal:</strong>
+        <span id="waktuTransaksi"></span>
+      </div>
+    </div>
+
+    <table class="struk-table">
+      <thead>
+        <tr>
+          <th style="width: 45%">Produk</th>
+          <th style="width: 15%">Kategori</th>
+          <th style="width: 20%">Bahan</th>
+          <th style="width: 20%; text-align: right">Harga</th>
+        </tr>
+      </thead>
+      <tbody id="checkoutItems"></tbody>
+    </table>
+
+    <div class="struk-total">
+      <div>TOTAL PEMBAYARAN:</div>
+      <div style="font-size: 16px; margin-top: 5px">
+        <span id="totalHarga" style="color: #4f46e5">Rp0</span>
+      </div>
+    </div>
+
+    <div id="qrcode" style="margin: 15px auto"></div>
+
+    <div class="mt-4 no-print flex justify-between">
+      <button onclick="kembaliKeBeranda()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm">
+        Kembali ke Beranda
+      </button>
+      <button onclick="window.print()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm">
+        Cetak Struk
+      </button>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCsmfNaVjpfNsufsmMDGllKeQOeTmO8cLU",
+      authDomain: "riifitriiistore.firebaseapp.com",
+      projectId: "riifitriiistore",
+      storageBucket: "riifitriiistore.firebasestorage.app",
+      messagingSenderId: "886150638080",
+      appId: "1:886150638080:web:e6ede1aecefaf6f4c646e5",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+  </script>
+
+  <script>
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "index.html";
+    }
+
+    function kembaliKeBeranda() {
+      window.location.href = "dashboard-pelanggan.html";
+    }
+    function generateId(length = 10) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+
+    function tampilkanStruk() {
+      const data = JSON.parse(localStorage.getItem("checkoutData")) || [];
+      const tbody = document.getElementById("checkoutItems");
+      const totalHargaEl = document.getElementById("totalHarga");
+      const waktuTransaksiEl = document.getElementById("waktuTransaksi");
+      const idTransaksiEl = document.getElementById("idTransaksi");
+      const nomorPesananEl = document.getElementById("nomorPesanan");
+
+      let total = 0;
+      tbody.innerHTML = "";
+      if (!data || data.items.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='4' class='text-center text-gray-500 py-4'>Tidak ada data transaksi.</td></tr>";
+        totalHargaEl.textContent = "Rp0";
+        return;
+      }
+
+      data.items.forEach((item) => {
+        total += item.price;
+        const row = document.createElement("tr");
+        row.className = "border-b border-gray-200";
+        row.innerHTML = `
+      <td>${item.name.substring(0, 15)}${item.name.length > 15 ? "..." : ""}</td>
+      <td>${item.category ? item.category.substring(0, 3) : "-"}</td>
+      <td>${item.material ? item.material.substring(0, 5) : "-"}</td>
+      <td>Rp${item.price.toLocaleString()}</td>
+    `;
+        tbody.appendChild(row);
+      });
+
+      totalHargaEl.textContent = "Rp" + total.toLocaleString();
+
+      const now = new Date();
+      const formattedDate = now.toLocaleString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      const formattedTime = now.toLocaleString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      waktuTransaksiEl.textContent = `${formattedDate}, ${formattedTime}`;
+
+      const id = generateId();
+      const orderNumber =
+        "#ORD" +
+        now.getFullYear().toString() +
+        (now.getMonth() + 1).toString().padStart(2, "0") +
+        now.getDate().toString().padStart(2, "0") +
+        now.getHours().toString().padStart(2, "0") +
+        now.getMinutes().toString().padStart(2, "0");
+
+      idTransaksiEl.textContent = id;
+      nomorPesananEl.textContent = orderNumber;
+
+      // Simpan transaksi ke Firestore
+      const user = JSON.parse(localStorage.getItem("loggedInUser"));
+      if (user && user.uid) {
+        db.collection("transaksi")
+          .add({
+            userId: user.uid,
+            nama: user.nama || "-",
+            idTransaksi: id,
+            nomorPesanan: orderNumber,
+            waktu: firebase.firestore.Timestamp.fromDate(now),
+            totalHarga: total,
+            produk: data.items,
+          })
+          .then(() => {
+            console.log("Data transaksi berhasil disimpan.");
+          })
+          .catch((error) => {
+            console.error("Gagal menyimpan transaksi:", error);
+          });
+      }
+
+      // QR Code
+      QRCode.toCanvas(
+        document.createElement("canvas"),
+        id,
+        { width: 100 },
+        function (error, canvas) {
+          if (!error) {
+            const qrEl = document.getElementById("qrcode");
+            qrEl.innerHTML = "";
+            qrEl.appendChild(canvas);
+          }
+        }
+      );
+    }
+
+    tampilkanStruk();
+  </script>
+</body>
+
+</html>

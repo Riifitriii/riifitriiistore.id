@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Riifitriii Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="bg-white shadow sticky top-0 z-10 w-full">
+    <div class="max-w-6xl mx-auto p-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="logo.png" alt="Logo Riifitriii Store" class="h-10 w-30 object-contain" />
+        <h1 class="text-2xl font-bold text-purple-700">Riifitriii Store</h1>
+      </div>
+    </div>
+  </header>
+  <main class="flex-grow flex items-center justify-center">
+    <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+      <h1 class="text-2xl font-bold text-center text-purple-600 mb-6">
+        Login Riifitriii Store
+      </h1>
+
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block mb-1 font-semibold">Username</label>
+          <input type="text" id="username" required class="w-full p-2 border rounded-md" />
+        </div>
+        <div>
+          <label class="block mb-1 font-semibold">Password</label>
+          <input type="password" id="password" required class="w-full p-2 border rounded-md" />
+        </div>
+        <button type="submit" class="w-full bg-purple-600 text-white py-2 rounded-md hover:bg-purple-700">
+          Login
+        </button>
+      </form>
+
+      <div class="text-center my-4 text-sm text-gray-500">atau</div>
+
+      <button type="button" id="googleLogin"
+        class="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-md hover:bg-gray-100">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="h-5 w-5" />
+        <span>Login dengan Google</span>
+      </button>
+
+      <p class="text-center mt-4 text-sm">
+        Belum punya akun?
+        <a href="register.html" class="text-purple-600 hover:underline">Daftar di sini</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white py-4 text-center text-sm text-gray-500 mt-10">
+    &copy; 2025 Riifitriii Store. All rights reserved.
+  </footer>
+
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCsmfNaVjpfNsufsmMDGllKeQOeTmO8cLU",
+      authDomain: "riifitriiistore.firebaseapp.com",
+      projectId: "riifitriiistore",
+      storageBucket: "riifitriiistore.firebasestorage.app",
+      messagingSenderId: "886150638080",
+      appId: "1:886150638080:web:e6ede1aecefaf6f4c646e5",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <script>
+    const form = document.getElementById("loginForm");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const usernameInput = document.getElementById("username");
+      const passwordInput = document.getElementById("password");
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      clearError();
+
+      const fakeEmail = `${username}@riifitriiistore.com`;
+
+      try {
+        const userCredential = await firebase
+          .auth()
+          .signInWithEmailAndPassword(fakeEmail, password);
+
+        const user = userCredential.user;
+
+        const userData = JSON.parse(
+          localStorage.getItem("userData_" + user.uid)
+        );
+        if (userData) {
+          localStorage.setItem("loggedInUser", JSON.stringify(userData));
+
+          switch (userData.role) {
+            case "pelanggan":
+              window.location.href = "dashboard-pelanggan.html";
+              break;
+            case "kasir":
+              window.location.href = "dashboard-kasir.html";
+              break;
+            case "admin":
+              window.location.href = "dashboard-admin.html";
+              break;
+            default:
+              showError(passwordInput, "Role tidak dikenali.");
+          }
+        } else {
+          showError(usernameInput, "Data pengguna tidak ditemukan.");
+        }
+      } catch (error) {
+        showError(usernameInput, "Username atau password salah.");
+        showError(passwordInput, " ");
+        Toastify({
+          text: "Login gagal. Coba lagi.",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ef4444",
+        }).showToast();
+      }
+    });
+
+    function showError(input, message) {
+      let error = document.createElement("p");
+      error.className = "text-sm text-red-500 mt-1";
+      error.innerText = message;
+      input.classList.add("border-red-500");
+      input.parentNode.appendChild(error);
+    }
+
+    function clearError() {
+      document.querySelectorAll("input").forEach((input) => {
+        input.classList.remove("border-red-500");
+      });
+      document.querySelectorAll(".text-red-500").forEach((el) => el.remove());
+    }
+  </script>
+
+  <script>
+    const googleLoginBtn = document.getElementById("googleLogin");
+
+    googleLoginBtn.addEventListener("click", async function () {
+      const provider = new firebase.auth.GoogleAuthProvider();
+
+      try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
+
+        // Cek di localStorage apakah data user udah pernah disimpan
+        let userData = JSON.parse(
+          localStorage.getItem("userData_" + user.uid)
+        );
+
+        if (!userData) {
+          // Kalau belum, buat default role-nya pelanggan
+          userData = {
+            uid: user.uid,
+            username: user.displayName || user.email,
+            role: "pelanggan", // default role
+          };
+          localStorage.setItem(
+            "userData_" + user.uid,
+            JSON.stringify(userData)
+          );
+        }
+
+        localStorage.setItem("loggedInUser", JSON.stringify(userData));
+
+        // Arahkan ke dashboard sesuai role
+        switch (userData.role) {
+          case "pelanggan":
+            window.location.href = "dashboard-pelanggan.html";
+            break;
+          case "kasir":
+            window.location.href = "dashboard-kasir.html";
+            break;
+          case "admin":
+            window.location.href = "dashboard-admin.html";
+            break;
+          default:
+            Toastify({
+              text: "Role tidak dikenali.",
+              duration: 3000,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#ef4444",
+            }).showToast();
+        }
+      } catch (error) {
+        console.error("Login Google gagal:", error);
+        Toastify({
+          text: "Login dengan Google gagal.",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ef4444",
+        }).showToast();
+      }
+    });
+  </script>
+</body>
+
+</html>

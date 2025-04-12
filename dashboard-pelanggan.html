@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Pelanggan - Riifitriii Store</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <!-- Swiper CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <style>
+    .toastify {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+  <!-- Header -->
+  <header class="bg-white shadow sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto p-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <img src="logo.png" alt="Logo Riifitriii Store" class="h-10 w-auto" />
+        <h1 class="text-2xl font-bold text-purple-700">Riifitriii Store</h1>
+      </div>
+      <div id="user-info" class="text-sm text-gray-600"></div>
+      <div class="text-sm text-gray-600 flex items-center space-x-4">
+        <span id="userInfo">Pelanggan</span>
+        <a href="cart.html" class="relative text-xl" title="Lihat Keranjang">
+          🛒
+          <span id="cart-count"
+            class="absolute -top-2 -right-2 bg-purple-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">0</span></a>
+        <button onclick="logout()" class="text-purple-700 hover:underline px-3 py-1 rounded">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="bg-purple-100 text-center py-10 mb-6">
+    <h2 class="text-3xl font-bold text-purple-800">
+      Selamat datang di Riifitriii Store!
+    </h2>
+    <p class="text-gray-700 mt-2">
+      Temukan berbagai fashion terbaik sesuai selera kamu~
+    </p>
+  </section>
+
+  <!-- Promo Banner Slider -->
+  <div class="max-w-6xl mx-auto px-4 mb-4">
+    <div class="swiper mySwiper">
+      <div class="swiper-wrapper">
+        <!-- Slide 1 -->
+        <div class="swiper-slide">
+          <img src="promo1.jpg" alt="Promo 1" />
+        </div>
+        <!-- Slide 2 -->
+        <div class="swiper-slide">
+          <img src="promo2.jpg" alt="Promo 2" />
+        </div>
+        <!-- Slide 3 -->
+        <div class="swiper-slide">
+          <img src="promo3.jpg" alt="Promo 3" />
+        </div>
+        <!-- Slide 4 -->
+        <div class="swiper-slide">
+          <img src="promo4.jpg" alt="Promo 4" />
+        </div>
+      </div>
+      <!-- Navigasi Slider -->
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+  </div>
+
+  <section id="greeting" class="max-w-6xl mx-auto mt-6 px-4">
+    <div class="bg-purple-50 p-4 rounded-xl shadow text-purple-800">
+      <p id="greeting-name" class="text-2xl font-bold"></p>
+      <p class="text-base mt-1">
+        Berikut produk-produk pilihan terbaik buat kamu
+      </p>
+    </div>
+  </section>
+
+  <!-- Filter dan Sorting -->
+  <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <input type="text" id="searchInput" placeholder="Cari produk..." class="p-2 border rounded-lg w-full md:w-1/3" />
+
+    <div class="flex flex-wrap gap-2">
+      <select id="categoryFilter" class="p-2 border rounded-lg">
+        <option value="">Semua Kategori</option>
+        <option value="Celana">Celana</option>
+        <option value="Sweater">Sweater</option>
+        <option value="Baju">Baju</option>
+        <option value="Mantel">Mantel</option>
+        <option value="Syal">Syal</option>
+        <option value="Gamis">Gamis</option>
+        <option value="Rok">Rok</option>
+        <option value="Hoodie">Hoodie</option>
+      </select>
+
+      <select id="sortBy" class="p-2 border rounded-lg">
+        <option value="">Urutkan</option>
+        <option value="termurah">Harga Termurah</option>
+        <option value="termahal">Harga Termahal</option>
+        <option value="createdAt">Tanggal Terbaru</option>
+        <option value="material">Bahan (A-Z)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Daftar Produk -->
+  <div id="productList"
+    class="max-w-6xl mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-6 px-4 pb-10">
+    <!-- Produk akan ditampilkan di sini -->
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white py-4 text-center text-sm text-gray-500 mt-10">
+    &copy; 2025 Riifitriii Store. All rights reserved.
+  </footer>
+
+  <!-- Swiper JS -->
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <!-- Script Produk -->
+  <script src="products.js"></script>
+  <script>
+    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+
+    if (loggedInUser && loggedInUser.name) {
+      const greetingName = document.getElementById("greeting-name");
+      if (greetingName) {
+        greetingName.innerText = `Hai, ${loggedInUser.name}!`;
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      window.location.href = "index.html";
+    }
+
+    const productList = document.getElementById("productList");
+    const categoryFilter = document.getElementById("categoryFilter");
+    const sortBy = document.getElementById("sortBy");
+    const searchInput = document.getElementById("searchInput");
+
+    function renderProducts(data) {
+      productList.innerHTML = "";
+      data.forEach((product) => {
+        const div = document.createElement("div");
+        const inCart = isInCart(product.id);
+        const stockLeft = product.stock - getCartQty(product.id);
+        const disableAdd = product.stock === 0 || inCart || stockLeft <= 0;
+
+        div.innerHTML = `
+          <img src="${product.image}" alt="${product.name
+          }" class="w-full aspect-[3/4] object-cover rounded-lg mb-4" />
+            <h3 class="font-bold text-lg text-purple-700">${product.name}</h3>
+            <p class="text-sm text-gray-500 capitalize">${product.category} | ${product.material
+          }</p>
+            <p class="text-gray-700 font-semibold mt-1">Rp${product.price.toLocaleString()}</p>
+            <p class="text-xs text-gray-400 mt-1">Stok: ${product.stock}</p>
+            <div class="mt-4 flex justify-between gap-2">
+              <button
+                data-product='${JSON.stringify(product).replace(/'/g, "\\'")}'
+                class="add-to-cart-btn ${disableAdd ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700"
+          } text-white px-3 py-1 rounded text-sm w-1/2"
+                ${disableAdd ? "disabled" : ""}
+              >
+                ${inCart ? "Sudah di Keranjang" : "Tambah ke Keranjang"}
+              </button>
+              <button
+                data-product='${JSON.stringify(product).replace(/'/g, "\\'")}'
+                class="buy-now-btn bg-pink-500 text-white px-3 py-1 rounded hover:bg-pink-600 text-sm w-1/2"
+              >
+                Beli Sekarang
+              </button>
+            </div>
+          `;
+        productList.appendChild(div);
+      });
+    }
+
+    function filterAndSortProducts() {
+      let filtered = products;
+
+      const keyword = searchInput.value.toLowerCase();
+      if (keyword) {
+        filtered = filtered.filter(
+          (p) =>
+            p.name.toLowerCase().includes(keyword) ||
+            p.category.toLowerCase().includes(keyword) ||
+            p.material.toLowerCase().includes(keyword)
+        );
+      }
+
+      const category = categoryFilter.value;
+      if (category) {
+        filtered = filtered.filter((p) => p.category === category);
+      }
+
+      const sort = sortBy.value;
+      if (sort === "termurah") {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (sort === "termahal") {
+        filtered.sort((a, b) => b.price - a.price);
+      } else if (sort === "createdAt") {
+        filtered.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+      } else if (sort === "material") {
+        filtered.sort((a, b) => a.material.localeCompare(b.material));
+      }
+
+      renderProducts(filtered);
+    }
+
+    categoryFilter.addEventListener("change", filterAndSortProducts);
+    sortBy.addEventListener("change", filterAndSortProducts);
+    searchInput.addEventListener("input", filterAndSortProducts);
+
+    renderProducts(products);
+
+    // Update jumlah item keranjang
+    function updateCartCount() {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const total = cart.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById("cart-count").textContent = total;
+    }
+
+    // Panggil saat halaman dimuat
+    updateCartCount();
+
+    function isInCart(productId) {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      return cart.some((item) => item.id === productId);
+    }
+
+    function getCartQty(productId) {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      const item = cart.find((i) => i.id === productId);
+      return item ? item.qty : 0;
+    }
+
+    function addToCart(product) {
+      try {
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+        // Cek apakah produk sudah ada
+        const existingItem = cart.find((item) => item.id === product.id);
+        if (existingItem) {
+          if (existingItem.qty >= product.stock) {
+            Toastify({
+              text: "Stok tidak mencukupi",
+              duration: 3000,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#f97316",
+            }).showToast();
+            return;
+          }
+          existingItem.qty += 1;
+        } else {
+          product.qty = 1;
+          cart.push(product);
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCartCount();
+        filterAndSortProducts(); // Render ulang untuk update tombol
+
+        Toastify({
+          text: "Produk berhasil ditambahkan ke keranjang",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#a855f7",
+        }).showToast();
+      } catch (e) {
+        console.error("Gagal menyimpan ke cart:", e);
+        Toastify({
+          text: "Gagal menambahkan produk ke keranjang",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#dc2626",
+        }).showToast();
+      }
+    }
+
+    function buyNow(product) {
+      try {
+        let cart = [product];
+        localStorage.setItem("cart", JSON.stringify(cart));
+
+        Toastify({
+          text: "Mengarahkan ke halaman pembayaran...",
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#ec4899",
+        }).showToast();
+
+        updateCartCount(); // Update angka keranjang juga
+        setTimeout(() => {
+          window.location.href = "cart.html";
+        }, 2000);
+      } catch (e) {
+        console.error("Gagal memproses pembelian:", e);
+        Toastify({
+          text: "Gagal memproses pembelian",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#dc2626",
+        }).showToast();
+      }
+    }
+
+    // Event listener untuk tombol
+    document.addEventListener("click", function (e) {
+      if (e.target.classList.contains("add-to-cart-btn")) {
+        const product = JSON.parse(e.target.dataset.product);
+        addToCart(product);
+      } else if (e.target.classList.contains("buy-now-btn")) {
+        const product = JSON.parse(e.target.dataset.product);
+        buyNow(product);
+      }
+    });
+
+    // Inisialisasi Swiper
+    const swiper = new Swiper('.swiper', {
+      loop: true, // Aktifkan looping
+      autoplay: {
+        delay: 3000, // Ganti slide setiap 3 detik
+        disableOnInteraction: false, // Tetap berjalan jika pengguna berinteraksi
+      },
+      navigation: {
+        nextEl: '.swiper-button-next',
+        prevEl: '.swiper-button-prev',
+      },
+      slidesPerView: 1, // Hanya menampilkan 1 slide per tampilan
+    });
+  </script>
+</body>
+
+</html>
